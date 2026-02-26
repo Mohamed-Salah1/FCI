@@ -1,5 +1,7 @@
-import { motion } from "framer-motion";
-import { Bus, MapPin, Clock, Users } from "lucide-react";
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import { useEffect, useRef, useState } from "react";
 import type { BusLocation } from "@/types";
 
 interface MapViewProps {
@@ -8,86 +10,120 @@ interface MapViewProps {
   fullScreen?: boolean;
 }
 
-const statusColors: Record<string, string> = {
-  "on-route": "bg-primary",
-  approaching: "bg-warning",
-  arrived: "bg-success",
-  idle: "bg-muted-foreground",
-  delayed: "bg-destructive",
+const center: [number, number] = [31.097041, 30.946548];
+
+// 🚌 Bus Icon with rotation support
+const busIcon = L.icon({
+  iconUrl: "/loga.ico",
+  iconSize: [40, 40],
+  iconAnchor: [20, 20],
+});
+
+// 📍 Fit map to route automatically
+const FitBounds = ({ positions }: { positions: [number, number][] }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (positions.length > 0) {
+      const bounds = L.latLngBounds(positions);
+      map.fitBounds(bounds, { padding: [50, 50] });
+    }
+  }, [positions, map]);
+
+  return null;
 };
 
 const MapView = ({ buses, className = "", fullScreen = false }: MapViewProps) => {
+  const [routeCoordinates, setRouteCoordinates] = useState<[number, number][]>([]);
+  const [animatedPosition, setAnimatedPosition] = useState<[number, number] | null>(null);
+
+  const activeBus = buses.find((b) => b.status !== "idle");
+
+  // 🔥 Fetch route when bus changes
+  useEffect(() => {
+    if (!activeBus) return;
+
+    const fetchRoute = async () => {
+      try {
+        const response = await fetch("https://api.openrouteservice.org/v2/directions/driving-car/geojson", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: import.meta.env.VITE_ORS_API_KEY,
+          },
+          body: JSON.stringify({
+            coordinates: [
+              [activeBus.lng, activeBus.lat],
+              [30.946548, 31.097041], // 👈 عدل دي لاحقًا لنقطة حقيقية
+            ],
+          }),
+        });
+
+        const data = await response.json();
+
+        const geometry = data.features[0].geometry.coordinates.map((coord: [number, number]) => [coord[1], coord[0]] as [number, number]);
+
+        setRouteCoordinates(geometry);
+      } catch (err) {
+        console.error("Route error:", err);
+      }
+    };
+
+    fetchRoute();
+  }, [activeBus?.lat, activeBus?.lng]);
+
+  // 🚀 Smooth animation
+  useEffect(() => {
+    if (routeCoordinates.length === 0) return;
+
+    let i = 0;
+
+    const interval = setInterval(() => {
+      setAnimatedPosition(routeCoordinates[i]);
+      i++;
+      if (i >= routeCoordinates.length) clearInterval(interval);
+    }, 500); // 5 ثواني لكل نقطة
+
+    return () => clearInterval(interval);
+  }, [routeCoordinates]);
+
   return (
-    <div className={`relative overflow-hidden rounded-xl glass-card ${fullScreen ? "h-full" : "h-[400px]"} ${className}`}>
-      {/* Grid background to simulate map */}
-      <div className="absolute inset-0 opacity-20">
-        <div className="h-full w-full" style={{
-          backgroundImage: `
-            linear-gradient(hsl(var(--border)) 1px, transparent 1px),
-            linear-gradient(90deg, hsl(var(--border)) 1px, transparent 1px)
-          `,
-          backgroundSize: "40px 40px",
-        }} />
-      </div>
+    <div className={`overflow-hidden rounded-xl ${fullScreen ? "h-full" : "h-[400px]"} ${className}`}>
+      <MapContainer center={center} zoom={13} style={{ height: "100%", width: "100%" }}>
+        <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
-      {/* Simulated route lines */}
-      <svg className="absolute inset-0 h-full w-full opacity-30">
-        <path d="M 50 300 Q 200 100 400 200 T 700 150" stroke="hsl(var(--primary))" strokeWidth="3" fill="none" strokeDasharray="8 4" />
-        <path d="M 100 350 Q 300 250 500 300 T 800 250" stroke="hsl(var(--success))" strokeWidth="2" fill="none" strokeDasharray="8 4" />
-      </svg>
+        {activeBus && (
+          <Marker position={animatedPosition ?? ([activeBus.lat, activeBus.lng] as [number, number])} icon={busIcon}>
+            <Popup>
+              <strong>{activeBus.busNumber}</strong>
+              <br />
+              Route: {activeBus.routeName}
+              <br />
+              ETA: {activeBus.eta} min
+            </Popup>
+          </Marker>
+        )}
 
-      {/* Bus markers */}
-      {buses.map((bus, i) => (
-        <motion.div
-          key={bus.busId}
-          initial={{ scale: 0 }}
-          animate={{ scale: 1, x: [0, 3, -3, 0], y: [0, -2, 2, 0] }}
-          transition={{ scale: { duration: 0.3, delay: i * 0.1 }, x: { duration: 4, repeat: Infinity, delay: i * 0.5 }, y: { duration: 3, repeat: Infinity, delay: i * 0.3 } }}
-          className="absolute cursor-pointer group"
-          style={{ left: `${15 + i * 18}%`, top: `${25 + (i % 3) * 20}%` }}
-        >
-          <div className="relative">
-            <div className={`h-10 w-10 rounded-full ${statusColors[bus.status]} flex items-center justify-center shadow-lg`}>
-              <Bus className="h-5 w-5 text-primary-foreground" />
-            </div>
-            {bus.status !== "idle" && (
-              <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-success animate-pulse-glow" />
+        {routeCoordinates.length > 0 && (
+          <>
+            <Polyline positions={routeCoordinates} pathOptions={{ color: "#2563eb", weight: 6 }} />
+            {activeBus && (
+              <>
+                {/* Start Marker */}
+                <Marker position={[activeBus.lat, activeBus.lng]}>
+                  <Popup>Start Point</Popup>
+                </Marker>
+
+                {/* End Marker */}
+                <Marker position={[activeBus.destinationLat, activeBus.destinationLng]}>
+                  <Popup>Destination</Popup>
+                </Marker>
+              </>
             )}
-            {/* Popup */}
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 glass-card-strong rounded-lg p-3 min-w-[180px] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-              <p className="font-semibold text-sm">{bus.busNumber}</p>
-              <div className="mt-1 space-y-1 text-xs text-muted-foreground">
-                <div className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {bus.nextStop}</div>
-                <div className="flex items-center gap-1"><Clock className="h-3 w-3" /> ETA: {bus.eta} min</div>
-                <div className="flex items-center gap-1"><Users className="h-3 w-3" /> {bus.occupancy}/{bus.capacity}</div>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      ))}
-
-      {/* Map legend */}
-      <div className="absolute bottom-3 left-3 glass-card-strong rounded-lg p-2 text-xs">
-        <p className="font-medium mb-1">Live Tracking</p>
-        <div className="flex gap-3">
-          {[
-            { label: "On Route", color: "bg-primary" },
-            { label: "Approaching", color: "bg-warning" },
-            { label: "Delayed", color: "bg-destructive" },
-          ].map((item) => (
-            <div key={item.label} className="flex items-center gap-1">
-              <span className={`h-2 w-2 rounded-full ${item.color}`} />
-              <span className="text-muted-foreground">{item.label}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Mapbox placeholder notice */}
-      <div className="absolute top-3 right-3 glass-card-strong rounded-lg px-3 py-1.5 text-xs text-muted-foreground">
-        <MapPin className="h-3 w-3 inline mr-1" />
-        Map Simulation • Add Mapbox key for live map
-      </div>
+            <FitBounds positions={routeCoordinates} />
+          </>
+        )}
+      </MapContainer>
     </div>
   );
 };

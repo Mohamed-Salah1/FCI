@@ -40,7 +40,10 @@ class WebSocketService {
 
   unsubscribe(type: string, handler: MessageHandler) {
     const existing = this.handlers.get(type) || [];
-    this.handlers.set(type, existing.filter((h) => h !== handler));
+    this.handlers.set(
+      type,
+      existing.filter((h) => h !== handler),
+    );
   }
 
   disconnect() {
@@ -51,12 +54,76 @@ class WebSocketService {
   // Mock GPS updates for demo
   private startMockUpdates() {
     setInterval(() => {
+      const baseLat = 31.097041;
+      const baseLng = 30.946548;
+
       const mockBuses: BusLocation[] = [
-        { busId: "bus-1", busNumber: "SB-101", lat: 33.8886 + Math.random() * 0.01, lng: 35.4955 + Math.random() * 0.01, speed: 35, heading: 45, occupancy: 28, capacity: 40, status: "on-route", routeName: "Route Alpha", nextStop: "City Center", eta: 8, driverName: "Ahmad K.", lastUpdated: new Date().toISOString() },
-        { busId: "bus-2", busNumber: "SB-102", lat: 33.8950 + Math.random() * 0.01, lng: 35.5010 + Math.random() * 0.01, speed: 20, heading: 120, occupancy: 35, capacity: 40, status: "approaching", routeName: "Route Beta", nextStop: "University Gate", eta: 3, driverName: "Sara M.", lastUpdated: new Date().toISOString() },
-        { busId: "bus-3", busNumber: "SB-103", lat: 33.8820 + Math.random() * 0.01, lng: 35.4880 + Math.random() * 0.01, speed: 0, heading: 0, occupancy: 0, capacity: 40, status: "idle", routeName: "Route Gamma", nextStop: "Depot", eta: 0, driverName: "Omar R.", lastUpdated: new Date().toISOString() },
-        { busId: "bus-4", busNumber: "SB-104", lat: 33.8900 + Math.random() * 0.01, lng: 35.5050 + Math.random() * 0.01, speed: 45, heading: 270, occupancy: 22, capacity: 40, status: "on-route", routeName: "Route Delta", nextStop: "Mall Junction", eta: 12, driverName: "Lina H.", lastUpdated: new Date().toISOString() },
+        {
+          busId: "bus-1",
+          busNumber: "SB-101",
+          lat: baseLat + Math.random() * 0.01,
+          lng: baseLng + Math.random() * 0.01,
+          speed: 35,
+          heading: 45,
+          occupancy: 28,
+          capacity: 40,
+          status: "on-route",
+          routeName: "Route Alpha",
+          nextStop: "City Center",
+          eta: 8,
+          driverName: "Ahmad K.",
+          lastUpdated: new Date().toISOString(),
+        },
+        {
+          busId: "bus-2",
+          busNumber: "SB-102",
+          lat: baseLat - Math.random() * 0.01,
+          lng: baseLng + Math.random() * 0.008,
+          speed: 20,
+          heading: 120,
+          occupancy: 35,
+          capacity: 40,
+          status: "approaching",
+          routeName: "Route Beta",
+          nextStop: "University Gate",
+          eta: 3,
+          driverName: "Sara M.",
+          lastUpdated: new Date().toISOString(),
+        },
+        {
+          busId: "bus-3",
+          busNumber: "SB-103",
+          lat: baseLat + Math.random() * 0.008,
+          lng: baseLng - Math.random() * 0.01,
+          speed: 0,
+          heading: 0,
+          occupancy: 0,
+          capacity: 40,
+          status: "idle",
+          routeName: "Route Gamma",
+          nextStop: "Depot",
+          eta: 0,
+          driverName: "Omar R.",
+          lastUpdated: new Date().toISOString(),
+        },
+        {
+          busId: "bus-4",
+          busNumber: "SB-104",
+          lat: baseLat - Math.random() * 0.006,
+          lng: baseLng - Math.random() * 0.007,
+          speed: 45,
+          heading: 270,
+          occupancy: 22,
+          capacity: 40,
+          status: "on-route",
+          routeName: "Route Delta",
+          nextStop: "Mall Junction",
+          eta: 12,
+          driverName: "Lina H.",
+          lastUpdated: new Date().toISOString(),
+        },
       ];
+
       mockBuses.forEach((bus) => {
         this.handlers.get("bus-location")?.forEach((h) => h(bus));
       });

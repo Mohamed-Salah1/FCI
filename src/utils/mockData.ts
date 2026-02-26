@@ -1,11 +1,10 @@
 import type { BusLocation, AttendanceRecord, Notification, RouteStop, StudentPickup } from "@/types";
 
 export const mockBusLocations: BusLocation[] = [
-  { busId: "bus-1", busNumber: "SB-101", lat: 33.8886, lng: 35.4955, speed: 35, heading: 45, occupancy: 28, capacity: 40, status: "on-route", routeName: "Route Alpha", nextStop: "City Center", eta: 8, driverName: "Ahmad K.", lastUpdated: new Date().toISOString() },
-  { busId: "bus-2", busNumber: "SB-102", lat: 33.8950, lng: 35.5010, speed: 20, heading: 120, occupancy: 35, capacity: 40, status: "approaching", routeName: "Route Beta", nextStop: "University Gate", eta: 3, driverName: "Sara M.", lastUpdated: new Date().toISOString() },
-  { busId: "bus-3", busNumber: "SB-103", lat: 33.8820, lng: 35.4880, speed: 0, heading: 0, occupancy: 0, capacity: 40, status: "idle", routeName: "Route Gamma", nextStop: "Depot", eta: 0, driverName: "Omar R.", lastUpdated: new Date().toISOString() },
-  { busId: "bus-4", busNumber: "SB-104", lat: 33.8900, lng: 35.5050, speed: 45, heading: 270, occupancy: 22, capacity: 40, status: "on-route", routeName: "Route Delta", nextStop: "Mall Junction", eta: 12, driverName: "Lina H.", lastUpdated: new Date().toISOString() },
-  { busId: "bus-5", busNumber: "SB-105", lat: 33.8870, lng: 35.4920, speed: 15, heading: 180, occupancy: 38, capacity: 40, status: "delayed", routeName: "Route Epsilon", nextStop: "Hospital Road", eta: 18, driverName: "Karim B.", lastUpdated: new Date().toISOString() },
+  { busId: "bus-1", busNumber: "SB-101", lat: 31.1205, lng: 30.9702, destinationLat: 31.097041, destinationLng: 30.946548, speed: 35, heading: 45, occupancy: 28, capacity: 40, status: "on-route", routeName: "Route Alpha", nextStop: "City Center", eta: 8, driverName: "Ahmad K.", lastUpdated: new Date().toISOString() },
+  { busId: "bus-2", busNumber: "SB-102", lat: 31.0752, lng: 30.9154, destinationLat: 31.1100, destinationLng: 30.9500, speed: 20, heading: 120, occupancy: 35, capacity: 40, status: "approaching", routeName: "Route Beta", nextStop: "University Gate", eta: 3, driverName: "Sara M.", lastUpdated: new Date().toISOString() },
+  { busId: "bus-3", busNumber: "SB-103", lat: 31.1358, lng: 30.9056, destinationLat: 31.0800, destinationLng: 30.9300, speed: 0, heading: 0, occupancy: 0, capacity: 40, status: "idle", routeName: "Route Gamma", nextStop: "Depot", eta: 0, driverName: "Omar R.", lastUpdated: new Date().toISOString() },
+  { busId: "bus-4", busNumber: "SB-104", lat: 31.0603, lng: 30.9851, destinationLat: 31.1000, destinationLng: 30.9100, speed: 45, heading: 270, occupancy: 22, capacity: 40, status: "on-route", routeName: "Route Delta", nextStop: "Mall Junction", eta: 12, driverName: "Lina H.", lastUpdated: new Date().toISOString() },
 ];
 
 export const mockAttendance: AttendanceRecord[] = [

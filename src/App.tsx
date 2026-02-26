@@ -8,6 +8,8 @@ import { useAppStore } from "@/store/useAppStore";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 
+import "leaflet/dist/leaflet.css";
+
 const Login = lazy(() => import("./pages/Login"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const StudentDashboard = lazy(() => import("./pages/student/StudentDashboard"));

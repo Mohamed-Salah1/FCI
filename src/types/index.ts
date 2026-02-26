@@ -15,6 +15,8 @@ export interface BusLocation {
   busNumber: string;
   lat: number;
   lng: number;
+  destinationLat: number;
+  destinationLng: number;  
   speed: number;
   heading: number;
   occupancy: number;
@@ -22,7 +24,7 @@ export interface BusLocation {
   status: "on-route" | "approaching" | "arrived" | "idle" | "delayed";
   routeName: string;
   nextStop: string;
-  eta: number; // minutes
+  eta: number;
   driverName: string;
   lastUpdated: string;
 }
