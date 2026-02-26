@@ -1,73 +1,143 @@
-# Welcome to your Lovable project
+# 🚍 School Transport Management Dashboard
 
-## Project info
+Modern admin dashboard for managing school transportation operations including students, drivers, buses, routes, attendance tracking, analytics, and fleet monitoring.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+---
 
-## How can I edit this code?
+## 📌 Project Overview
 
-There are several ways of editing your application.
+This project is a **React + TypeScript admin dashboard** designed to manage daily school transport workflows through a clean and scalable interface.
 
-**Use Lovable**
+Main features include:
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+* Student Management
+* Driver Management
+* Bus & Fleet Management
+* Routes Management
+* Attendance Records
+* Analytics & Reports
+* Notifications System
+* Protected Admin Layout
 
-Changes made via Lovable will be committed automatically to this repo.
+The UI is built with reusable components following a scalable frontend architecture.
 
-**Use your preferred IDE**
+---
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## 🛠️ Tech Stack
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+This project is built using:
 
-Follow these steps:
+* ⚡ Vite
+* ⚛️ React
+* 🟦 TypeScript
+* 🎨 Tailwind CSS
+* 🧩 shadcn/ui
+* 📊 Recharts (Analytics & Charts)
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
+---
+
+## 📂 Project Structure
+
+```
+src/
+ ├── components/
+ │   ├── dashboard/
+ │   ├── layout/
+ │   ├── ui/
+ │   └── forms/
+ ├── pages/
+ ├── routes/
+ ├── hooks/
+ └── lib/
+```
+
+### Key Concepts
+
+* Reusable UI Components
+* Modular Forms System
+* Protected Routes
+* Dashboard Layout Architecture
+
+---
+
+## 🚀 Getting Started (Local Development)
+
+### 1️⃣ Clone the Repository
+
+```bash
 git clone <YOUR_GIT_URL>
+```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### 2️⃣ Navigate to Project
 
-# Step 3: Install the necessary dependencies.
-npm i
+```bash
+cd <PROJECT_NAME>
+```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+### 3️⃣ Install Dependencies
+
+```bash
+npm install
+```
+
+### 4️⃣ Run Development Server
+
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The app will start with hot reload enabled.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+---
 
-**Use GitHub Codespaces**
+## 🧩 Forms System
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+All forms are located inside:
 
-## What technologies are used for this project?
+```
+src/components/ui/forms
+```
 
-This project is built with:
+Forms are designed to be reusable across pages like:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+* Students
+* Drivers
+* Routes
+* Buses
 
-## How can I deploy this project?
+---
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## 🔐 Admin Features
 
-## Can I connect a custom domain to my Lovable project?
+* Sidebar Navigation
+* KPI Cards
+* Analytics Charts
+* Protected Routes
+* Notification Center
 
-Yes, you can!
+---
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## 📈 Future Improvements
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+* Unified CRUD service layer
+* API integration
+* Role-based permissions
+* Real-time bus tracking
+* Advanced filters & search
+
+---
+
+## 🤝 Contribution
+
+You can contribute by:
+
+* Improving form logic
+* Enhancing analytics
+* Refactoring data flow
+* Adding new dashboard modules
+
+---
+
+## 📄 License
+
+This project is for educational and development purposes.
