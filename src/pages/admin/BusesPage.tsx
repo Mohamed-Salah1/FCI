@@ -108,9 +108,6 @@ const BusesPage = () => {
               <DropdownMenuItem onClick={() => setEditingBus(row.original)}>
                 <Edit className="h-4 w-4 mr-2" /> Edit Details
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Settings className="h-4 w-4 mr-2" /> Maintenance Log
-              </DropdownMenuItem>
               <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(row.original.id)}>
                 <Trash2 className="h-4 w-4 mr-2" /> Delete
               </DropdownMenuItem>

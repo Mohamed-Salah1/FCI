@@ -155,67 +155,6 @@ const StudentsPage = () => {
           />
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 glass-card rounded-2xl p-6 border border-border/50">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="font-bold text-lg">Recent Attendance Activity</h3>
-              <Button variant="link" size="sm" className="text-primary">View All</Button>
-            </div>
-            <div className="space-y-4">
-              {mockAttendance.slice(0, 4).map((record, i) => (
-                <div key={i} className="flex items-center justify-between p-4 rounded-xl bg-secondary/30 border border-border/50 hover:bg-secondary/50 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
-                      record.status === 'present' ? 'bg-success/10 text-success' :
-                      record.status === 'absent' ? 'bg-destructive/10 text-destructive' :
-                      'bg-warning/10 text-warning'
-                    }`}>
-                      {record.status === 'present' ? <CheckCircle className="h-5 w-5" /> :
-                       record.status === 'absent' ? <XCircle className="h-5 w-5" /> :
-                       <Clock className="h-5 w-5" />}
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold">{record.studentName}</p>
-                      <p className="text-xs text-muted-foreground">Bus {record.busNumber} • {record.boardingTime}</p>
-                    </div>
-                  </div>
-                  <Badge variant={record.status === 'present' ? 'default' : record.status === 'late' ? 'secondary' : 'destructive'} className="capitalize">
-                    {record.status}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="glass-card rounded-2xl p-6 border border-border/50 flex flex-col justify-between">
-            <div>
-              <h3 className="font-bold text-lg mb-2">Student Statistics</h3>
-              <div className="space-y-6 mt-6">
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Total Students</span>
-                    <span className="font-bold">{students.length}</span>
-                  </div>
-                  <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
-                    <div className="h-full bg-primary w-full" />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Active Riders</span>
-                    <span className="font-bold">{students.filter(s => s.status === 'active').length}</span>
-                  </div>
-                  <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
-                    <div className="h-full bg-success w-[95%]" />
-                  </div>
-                </div>
-              </div>
-            </div>
-            <Button className="w-full mt-8 rounded-xl h-12">
-              Generate Enrollment Report
-            </Button>
-          </div>
-        </div>
       </div>
 
       {/* Add Student Dialog */}
