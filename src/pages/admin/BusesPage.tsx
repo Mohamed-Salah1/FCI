@@ -1,158 +1,203 @@
+import React, { useState } from "react";
 import AppLayout from "@/components/layout/AppLayout";
-import { mockBusLocations } from "@/utils/mockData";
 import { motion } from "framer-motion";
-import { Bus, Plus, Search, Filter, MoreVertical, Settings, AlertTriangle, CheckCircle, Users, MapPin } from "lucide-react";
+import { Bus as BusIcon, Plus, MoreVertical, Users, MapPin, Edit, Trash2, Settings, ShieldCheck, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { DataTable } from "@/components/ui/data-table";
+import { ColumnDef } from "@tanstack/react-table";
+import { Bus } from "@/types/data";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { BusForm } from "@/components/forms/BusForm";
+import { toast } from "sonner";
 
 const BusesPage = () => {
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [editingBus, setEditingBus] = useState<Bus | null>(null);
+  const [buses, setBuses] = useState<Bus[]>([
+    { id: "b1", busNumber: "SB-101", capacity: 35, plateNumber: "ABC-1234", assignedDriver: "Robert Wilson", route: "Route Alpha", status: "active" },
+    { id: "b2", busNumber: "SB-102", capacity: 30, plateNumber: "XYZ-5678", assignedDriver: "Michael Chen", route: "Route Beta", status: "active" },
+    { id: "b3", busNumber: "SB-103", capacity: 40, plateNumber: "LMN-9012", assignedDriver: "Sarah Miller", route: "Route Gamma", status: "maintenance" },
+    { id: "b4", busNumber: "SB-104", capacity: 35, plateNumber: "QRS-3456", assignedDriver: "David Brown", route: "Route Delta", status: "active" },
+  ]);
+
+  const columns: ColumnDef<Bus>[] = [
+    {
+      accessorKey: "busNumber",
+      header: "Bus Number",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+            <BusIcon className="h-5 w-5" />
+          </div>
+          <div className="flex flex-col">
+            <span className="font-bold">{row.original.busNumber}</span>
+            <span className="text-[10px] text-muted-foreground font-mono">{row.original.plateNumber}</span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "capacity",
+      header: "Capacity",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-1.5 text-sm">
+          <Users className="h-3.5 w-3.5 text-muted-foreground" />
+          <span>{row.original.capacity} seats</span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "assignedDriver",
+      header: "Driver",
+      cell: ({ row }) => (
+        <span className="text-sm font-medium">{row.original.assignedDriver}</span>
+      ),
+    },
+    {
+      accessorKey: "route",
+      header: "Route",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-1.5 text-sm">
+          <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+          <span>{row.original.route}</span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        const statusConfig = {
+          active: { label: "Active", variant: "default" as const, icon: ShieldCheck },
+          maintenance: { label: "Maintenance", variant: "secondary" as const, icon: Settings },
+          inactive: { label: "Inactive", variant: "outline" as const, icon: AlertCircle },
+        };
+        const config = statusConfig[row.original.status as keyof typeof statusConfig] || statusConfig.inactive;
+        return (
+          <Badge variant={config.variant} className="gap-1 px-2 py-0.5">
+            <config.icon className="h-3 w-3" />
+            {config.label}
+          </Badge>
+        );
+      },
+    },
+    {
+      id: "actions",
+      header: () => <div className="text-right">Actions</div>,
+      cell: ({ row }) => (
+        <div className="text-right">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setEditingBus(row.original)}>
+                <Edit className="h-4 w-4 mr-2" /> Edit Details
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Settings className="h-4 w-4 mr-2" /> Maintenance Log
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(row.original.id)}>
+                <Trash2 className="h-4 w-4 mr-2" /> Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ),
+    },
+  ];
+
+  const handleAdd = (data: any) => {
+    const newBus = {
+      ...data,
+      id: `b${buses.length + 1}`,
+    };
+    setBuses([newBus, ...buses]);
+    setIsAddOpen(false);
+    toast.success("Bus added to fleet successfully");
+  };
+
+  const handleEdit = (data: any) => {
+    if (!editingBus) return;
+    setBuses(buses.map(b => b.id === editingBus.id ? { ...b, ...data } : b));
+    setEditingBus(null);
+    toast.success("Bus details updated");
+  };
+
+  const handleDelete = (id: string) => {
+    setBuses(buses.filter(b => b.id !== id));
+    toast.success("Bus removed from fleet");
+  };
+
   return (
     <AppLayout title="Fleet Management">
       <div className="space-y-6">
-        <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
-          <div className="relative w-full md:w-96">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search buses by number or driver..." className="pl-10" />
-          </div>
-          <div className="flex gap-2 w-full md:w-auto">
-            <Button variant="outline" size="sm" className="flex-1 md:flex-none">
-              <Filter className="h-4 w-4 mr-2" /> Filter
-            </Button>
-            <Button size="sm" className="flex-1 md:flex-none">
-              <Plus className="h-4 w-4 mr-2" /> Add Bus
-            </Button>
-          </div>
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            <BusIcon className="h-6 w-6 text-primary" />
+            Buses
+          </h2>
+          <Button onClick={() => setIsAddOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" /> Add Bus
+          </Button>
         </div>
 
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="glass-card rounded-xl border border-border/50 overflow-hidden"
+          className="glass-card rounded-xl border border-border/50 p-4"
         >
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-secondary/30 hover:bg-secondary/30">
-                <TableHead className="w-[150px]">Bus Number</TableHead>
-                <TableHead>Route</TableHead>
-                <TableHead>Driver</TableHead>
-                <TableHead>Occupancy</TableHead>
-                <TableHead>Next Stop</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {mockBusLocations.map((bus) => (
-                <TableRow key={bus.busId} className="hover:bg-secondary/10 transition-colors">
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${
-                        bus.status === 'delayed' ? 'bg-destructive/10 text-destructive' :
-                        bus.status === 'idle' ? 'bg-muted text-muted-foreground' :
-                        'bg-primary/10 text-primary'
-                      }`}>
-                        <Bus className="h-5 w-5" />
-                      </div>
-                      <span className="font-bold">{bus.busNumber}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-sm font-medium">{bus.routeName}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div className="h-7 w-7 rounded-full bg-secondary flex items-center justify-center text-[10px] font-bold">
-                        {bus.driverName.charAt(0)}
-                      </div>
-                      <span className="text-sm">{bus.driverName}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col gap-1.5 w-24">
-                      <div className="flex justify-between text-[10px]">
-                        <span className="text-muted-foreground">{bus.occupancy}/{bus.capacity}</span>
-                        <span className="font-medium">{Math.round((bus.occupancy/bus.capacity)*100)}%</span>
-                      </div>
-                      <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
-                        <div
-                          className={`h-full ${bus.occupancy / bus.capacity > 0.9 ? 'bg-destructive' : 'bg-primary'}`}
-                          style={{ width: `${(bus.occupancy / bus.capacity) * 100}%` }}
-                        />
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1.5 text-xs">
-                      <MapPin className="h-3 w-3 text-muted-foreground" />
-                      <span>{bus.nextStop}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={
-                      bus.status === 'on-route' ? 'default' :
-                      bus.status === 'approaching' ? 'secondary' :
-                      bus.status === 'delayed' ? 'destructive' : 'outline'
-                    } className="capitalize text-[10px] h-5">
-                      {bus.status.replace('-', ' ')}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>Track Live</DropdownMenuItem>
-                        <DropdownMenuItem>Manage Bus</DropdownMenuItem>
-                        <DropdownMenuItem>Maintenance Log</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">Remove Bus</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <DataTable 
+            columns={columns} 
+            data={buses} 
+            searchKey="busNumber" 
+            searchPlaceholder="Search by bus number..." 
+          />
         </motion.div>
-
-        <div className="glass-card rounded-xl p-6 border border-border/50">
-          <div className="flex items-center gap-2 mb-4">
-            <AlertTriangle className="h-5 w-5 text-warning" />
-            <h3 className="font-semibold">Maintenance Alerts</h3>
-          </div>
-          <div className="space-y-3">
-            {[
-              { bus: "SB-103", issue: "Engine service due in 250km", priority: "medium" },
-              { bus: "SB-105", issue: "Brake pad wear detected", priority: "high" },
-            ].map((alert, i) => (
-              <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 border border-border/50">
-                <div className="flex items-center gap-3">
-                  <span className="font-bold text-sm">{alert.bus}</span>
-                  <span className="text-sm text-muted-foreground">{alert.issue}</span>
-                </div>
-                <Badge variant={alert.priority === 'high' ? 'destructive' : 'secondary'} className="text-[10px] uppercase">
-                  {alert.priority}
-                </Badge>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
+
+      {/* Add Bus Dialog */}
+      <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Add New Bus to Fleet</DialogTitle>
+          </DialogHeader>
+          <BusForm 
+            onSubmit={handleAdd} 
+            onCancel={() => setIsAddOpen(false)} 
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Bus Dialog */}
+      <Dialog open={!!editingBus} onOpenChange={(open) => !open && setEditingBus(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Bus Details</DialogTitle>
+          </DialogHeader>
+          {editingBus && (
+            <BusForm 
+              initialData={editingBus}
+              onSubmit={handleEdit} 
+              onCancel={() => setEditingBus(null)} 
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 };

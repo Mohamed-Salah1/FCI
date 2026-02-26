@@ -1,274 +1,289 @@
+import React, { useState } from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import { motion } from "framer-motion";
-import { Users, Plus, Search, Filter, MoreVertical, Mail, Phone, Star, TrendingUp, Clock, AlertTriangle } from "lucide-react";
+import { User as SteeringWheel, Plus, MoreVertical, Phone, CreditCard, Calendar as CalendarIcon, Edit, Trash2, Eye, UserCheck, UserX } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { DataTable } from "@/components/ui/data-table";
+import { ColumnDef } from "@tanstack/react-table";
+import { Driver } from "@/types/data";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { DriverForm } from "@/components/forms/DriverForm";
+import { toast } from "sonner";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const DriversPage = () => {
-  const drivers = [
-    { 
-      id: "d1", 
-      name: "Ahmad K.", 
-      email: "ahmad.k@example.com", 
-      phone: "+1 234 567 890",
-      bus: "SB-101",
-      route: "Route Alpha",
-      status: "active",
-      rating: 4.9,
-      trips: 124,
-      license: "DL-2024-001",
-      joinDate: "2023-06-15"
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [editingDriver, setEditingDriver] = useState<Driver | null>(null);
+  const [viewingDriver, setViewingDriver] = useState<Driver | null>(null);
+  const [drivers, setDrivers] = useState<Driver[]>([
+    { id: "d1", name: "Robert Wilson", phone: "+1 234 567 801", licenseNumber: "DL-99283", licenseExpiry: "2025-12-10", assignedBus: "SB-101", status: "active", availability: "on-duty" },
+    { id: "d2", name: "Michael Chen", phone: "+1 234 567 802", licenseNumber: "DL-11234", licenseExpiry: "2026-05-22", assignedBus: "SB-102", status: "active", availability: "available" },
+    { id: "d3", name: "Sarah Miller", phone: "+1 234 567 803", licenseNumber: "DL-88721", licenseExpiry: "2024-11-15", assignedBus: "SB-103", status: "active", availability: "off-duty" },
+    { id: "d4", name: "David Brown", phone: "+1 234 567 804", licenseNumber: "DL-55432", licenseExpiry: "2025-08-30", assignedBus: "SB-104", status: "inactive", availability: "off-duty" },
+  ]);
+
+  const columns: ColumnDef<Driver>[] = [
+    {
+      accessorKey: "name",
+      header: "Driver",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-3">
+          <Avatar className="h-9 w-9">
+            <AvatarImage src={row.original.avatar} />
+            <AvatarFallback className="gradient-primary text-primary-foreground font-bold">
+              {row.original.name.charAt(0)}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col">
+            <span className="font-medium">{row.original.name}</span>
+            <span className="text-[10px] text-muted-foreground">ID: {row.original.id}</span>
+          </div>
+        </div>
+      ),
     },
-    { 
-      id: "d2", 
-      name: "Sara M.", 
-      email: "sara.m@example.com", 
-      phone: "+1 234 567 891",
-      bus: "SB-102",
-      route: "Route Beta",
-      status: "active",
-      rating: 4.8,
-      trips: 118,
-      license: "DL-2024-002",
-      joinDate: "2023-07-20"
+    {
+      accessorKey: "phone",
+      header: "Phone",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-1.5 text-sm">
+          <Phone className="h-3 w-3 text-muted-foreground" />
+          <span>{row.original.phone}</span>
+        </div>
+      ),
     },
-    { 
-      id: "d3", 
-      name: "Omar R.", 
-      email: "omar.r@example.com", 
-      phone: "+1 234 567 892",
-      bus: "SB-103",
-      route: "Route Gamma",
-      status: "inactive",
-      rating: 4.5,
-      trips: 92,
-      license: "DL-2024-003",
-      joinDate: "2023-08-10"
+    {
+      accessorKey: "assignedBus",
+      header: "Assigned Bus",
+      cell: ({ row }) => (
+        <Badge variant="secondary" className="font-mono">{row.original.assignedBus}</Badge>
+      ),
     },
-    { 
-      id: "d4", 
-      name: "Lina H.", 
-      email: "lina.h@example.com", 
-      phone: "+1 234 567 893",
-      bus: "SB-104",
-      route: "Route Delta",
-      status: "active",
-      rating: 4.7,
-      trips: 105,
-      license: "DL-2024-004",
-      joinDate: "2023-09-05"
+    {
+      accessorKey: "availability",
+      header: "Availability",
+      cell: ({ row }) => {
+        const colors = {
+          "available": "bg-success/10 text-success border-success/20",
+          "on-duty": "bg-primary/10 text-primary border-primary/20",
+          "off-duty": "bg-muted text-muted-foreground border-transparent",
+        };
+        return (
+          <Badge variant="outline" className={`capitalize text-[10px] ${colors[row.original.availability as keyof typeof colors]}`}>
+            {row.original.availability.replace("-", " ")}
+          </Badge>
+        );
+      },
     },
-    { 
-      id: "d5", 
-      name: "Hassan A.", 
-      email: "hassan.a@example.com", 
-      phone: "+1 234 567 894",
-      bus: "SB-105",
-      route: "Route Epsilon",
-      status: "active",
-      rating: 4.6,
-      trips: 98,
-      license: "DL-2024-005",
-      joinDate: "2023-10-12"
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => (
+        <Badge variant={row.original.status === 'active' ? 'default' : 'outline'} className="capitalize text-[10px]">
+          {row.original.status}
+        </Badge>
+      ),
+    },
+    {
+      id: "actions",
+      header: () => <div className="text-right">Actions</div>,
+      cell: ({ row }) => (
+        <div className="text-right">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setViewingDriver(row.original)}>
+                <Eye className="h-4 w-4 mr-2" /> View Profile
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setEditingDriver(row.original)}>
+                <Edit className="h-4 w-4 mr-2" /> Edit Details
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => toggleStatus(row.original.id)}>
+                {row.original.status === 'active' ? (
+                  <><UserX className="h-4 w-4 mr-2" /> Deactivate</>
+                ) : (
+                  <><UserCheck className="h-4 w-4 mr-2" /> Activate</>
+                )}
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(row.original.id)}>
+                <Trash2 className="h-4 w-4 mr-2" /> Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ),
     },
   ];
+
+  const handleAdd = (data: any) => {
+    const newDriver = {
+      ...data,
+      id: `d${drivers.length + 1}`,
+      licenseExpiry: data.licenseExpiry.toISOString().split('T')[0],
+    };
+    setDrivers([newDriver, ...drivers]);
+    setIsAddOpen(false);
+    toast.success("Driver added successfully");
+  };
+
+  const handleEdit = (data: any) => {
+    if (!editingDriver) return;
+    setDrivers(drivers.map(d => d.id === editingDriver.id ? { 
+      ...d, 
+      ...data, 
+      licenseExpiry: data.licenseExpiry instanceof Date ? data.licenseExpiry.toISOString().split('T')[0] : data.licenseExpiry 
+    } : d));
+    setEditingDriver(null);
+    toast.success("Driver updated successfully");
+  };
+
+  const handleDelete = (id: string) => {
+    setDrivers(drivers.filter(d => d.id !== id));
+    toast.success("Driver deleted successfully");
+  };
+
+  const toggleStatus = (id: string) => {
+    setDrivers(drivers.map(d => d.id === id ? { ...d, status: d.status === 'active' ? 'inactive' : 'active' } : d));
+    toast.success("Driver status updated");
+  };
 
   return (
     <AppLayout title="Driver Management">
       <div className="space-y-6">
-        <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
-          <div className="relative w-full md:w-96">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search drivers by name, bus or route..." className="pl-10" />
-          </div>
-          <div className="flex gap-2 w-full md:w-auto">
-            <Button variant="outline" size="sm" className="flex-1 md:flex-none">
-              <Filter className="h-4 w-4 mr-2" /> Filter
-            </Button>
-            <Button size="sm" className="flex-1 md:flex-none">
-              <Plus className="h-4 w-4 mr-2" /> Add Driver
-            </Button>
-          </div>
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            <SteeringWheel className="h-6 w-6 text-primary" />
+            Drivers
+          </h2>
+          <Button onClick={() => setIsAddOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" /> Add Driver
+          </Button>
         </div>
 
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="glass-card rounded-xl border border-border/50 overflow-hidden"
+          className="glass-card rounded-xl border border-border/50 p-4"
         >
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-secondary/30 hover:bg-secondary/30">
-                <TableHead className="w-[200px]">Driver</TableHead>
-                <TableHead>Bus & Route</TableHead>
-                <TableHead>Contact</TableHead>
-                <TableHead>License</TableHead>
-                <TableHead>Rating</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {drivers.map((driver) => (
-                <TableRow key={driver.id} className="hover:bg-secondary/10 transition-colors">
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-full gradient-primary flex items-center justify-center text-xs text-primary-foreground font-bold">
-                        {driver.name.charAt(0)}
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="font-medium">{driver.name}</span>
-                        <span className="text-[10px] text-muted-foreground">ID: {driver.id}</span>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium">{driver.bus}</span>
-                      <span className="text-xs text-muted-foreground">{driver.route}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col text-xs gap-1">
-                      <div className="flex items-center gap-1.5">
-                        <Mail className="h-3 w-3 text-muted-foreground" />
-                        <span>{driver.email}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Phone className="h-3 w-3 text-muted-foreground" />
-                        <span>{driver.phone}</span>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm font-mono text-muted-foreground">{driver.license}</span>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1.5">
-                      <Star className="h-4 w-4 fill-warning text-warning" />
-                      <span className="font-bold text-sm">{driver.rating}</span>
-                      <span className="text-xs text-muted-foreground">({driver.trips} trips)</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={driver.status === 'active' ? 'default' : 'outline'} className="capitalize text-[10px] h-5">
-                      {driver.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>View Profile</DropdownMenuItem>
-                        <DropdownMenuItem>Edit Details</DropdownMenuItem>
-                        <DropdownMenuItem>View History</DropdownMenuItem>
-                        <DropdownMenuItem>Performance Report</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">Deactivate</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <DataTable 
+            columns={columns} 
+            data={drivers} 
+            searchKey="name" 
+            searchPlaceholder="Search drivers by name..." 
+          />
         </motion.div>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 glass-card rounded-2xl p-6 border border-border/50">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="font-bold text-lg flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-success" /> Top Performers
-              </h3>
-              <Button variant="link" size="sm" className="text-primary">View All</Button>
-            </div>
-            <div className="space-y-4">
-              {drivers.filter(d => d.status === 'active').sort((a, b) => b.rating - a.rating).slice(0, 4).map((driver) => (
-                <div key={driver.id} className="flex items-center justify-between p-4 rounded-xl bg-secondary/30 border border-border/50 hover:bg-secondary/50 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-full gradient-primary flex items-center justify-center text-xs text-primary-foreground font-bold">
-                      {driver.name.charAt(0)}
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold">{driver.name}</p>
-                      <p className="text-xs text-muted-foreground">{driver.bus} • {driver.route}</p>
-                    </div>
+      {/* Add Driver Dialog */}
+      <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Add New Driver</DialogTitle>
+          </DialogHeader>
+          <DriverForm 
+            onSubmit={handleAdd} 
+            onCancel={() => setIsAddOpen(false)} 
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Driver Dialog */}
+      <Dialog open={!!editingDriver} onOpenChange={(open) => !open && setEditingDriver(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Driver Details</DialogTitle>
+          </DialogHeader>
+          {editingDriver && (
+            <DriverForm 
+              initialData={editingDriver}
+              onSubmit={handleEdit} 
+              onCancel={() => setEditingDriver(null)} 
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Driver Profile Drawer */}
+      <Sheet open={!!viewingDriver} onOpenChange={(open) => !open && setViewingDriver(null)}>
+        <SheetContent className="sm:max-w-md">
+          <SheetHeader>
+            <SheetTitle>Driver Profile</SheetTitle>
+          </SheetHeader>
+          {viewingDriver && (
+            <div className="mt-8 space-y-6">
+              <div className="flex flex-col items-center gap-4">
+                <Avatar className="h-24 w-24">
+                  <AvatarFallback className="text-2xl gradient-primary text-primary-foreground font-bold">
+                    {viewingDriver.name.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="text-center">
+                  <h3 className="text-xl font-bold">{viewingDriver.name}</h3>
+                  <Badge variant="outline" className="mt-1">ID: {viewingDriver.id}</Badge>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4">
+                <div className="p-4 rounded-xl bg-secondary/30 border border-border/50 space-y-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground flex items-center gap-2"><Phone className="h-4 w-4" /> Phone</span>
+                    <span className="font-medium">{viewingDriver.phone}</span>
                   </div>
-                  <div className="text-right">
-                    <div className="flex items-center gap-1 justify-end mb-1">
-                      <Star className="h-4 w-4 fill-warning text-warning" />
-                      <span className="font-bold">{driver.rating}</span>
-                    </div>
-                    <p className="text-[10px] text-muted-foreground">{driver.trips} trips</p>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground flex items-center gap-2"><CreditCard className="h-4 w-4" /> License</span>
+                    <span className="font-medium">{viewingDriver.licenseNumber}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground flex items-center gap-2"><CalendarIcon className="h-4 w-4" /> Expiry</span>
+                    <span className="font-medium">{viewingDriver.licenseExpiry}</span>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
 
-          <div className="glass-card rounded-2xl p-6 border border-border/50 flex flex-col justify-between">
-            <div>
-              <h3 className="font-bold text-lg mb-2">Driver Statistics</h3>
-              <p className="text-sm text-muted-foreground mb-6">Overview of driver fleet and performance.</p>
-
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Total Drivers</span>
-                    <span className="font-bold">{drivers.length}</span>
+                <div className="p-4 rounded-xl bg-secondary/30 border border-border/50 space-y-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Assigned Bus</span>
+                    <Badge variant="secondary">{viewingDriver.assignedBus}</Badge>
                   </div>
-                  <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
-                    <div className="h-full bg-primary w-full" />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Active Drivers</span>
-                    <span className="font-bold">{drivers.filter(d => d.status === 'active').length}</span>
-                  </div>
-                  <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
-                    <div className="h-full bg-success w-[80%]" />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Avg. Rating</span>
-                    <span className="font-bold flex items-center gap-1">
-                      {(drivers.reduce((sum, d) => sum + d.rating, 0) / drivers.length).toFixed(1)}
-                      <Star className="h-3 w-3 fill-warning text-warning" />
-                    </span>
-                  </div>
-                  <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
-                    <div className="h-full bg-warning w-[92%]" />
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Current Status</span>
+                    <Badge variant={viewingDriver.status === 'active' ? 'default' : 'outline'}>{viewingDriver.status}</Badge>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <Button className="w-full mt-8 rounded-xl h-12">
-              Generate Performance Report
-            </Button>
-          </div>
-        </div>
-      </div>
+              <div className="flex gap-2">
+                <Button className="flex-1" onClick={() => {
+                  setEditingDriver(viewingDriver);
+                  setViewingDriver(null);
+                }}>
+                  <Edit className="h-4 w-4 mr-2" /> Edit Profile
+                </Button>
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
     </AppLayout>
   );
 };

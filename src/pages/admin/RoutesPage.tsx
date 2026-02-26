@@ -1,117 +1,192 @@
+import React, { useState } from "react";
 import AppLayout from "@/components/layout/AppLayout";
-import { mockRouteStops } from "@/utils/mockData";
 import { motion } from "framer-motion";
-import { Route, Plus, Search, Filter, MoreVertical, MapPin, Clock, Users, CheckCircle } from "lucide-react";
+import { MapPin, Plus, MoreVertical, Bus, Edit, Trash2, Map as MapIcon, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { DataTable } from "@/components/ui/data-table";
+import { ColumnDef } from "@tanstack/react-table";
+import { Route } from "@/types/data";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { RouteForm } from "@/components/forms/RouteForm";
+import { toast } from "sonner";
 
 const RoutesPage = () => {
-  const routes = [
-    { id: "r1", name: "Route Alpha", stops: 6, students: 42, status: "active", color: "bg-primary" },
-    { id: "r2", name: "Route Beta", stops: 8, students: 35, status: "active", color: "bg-success" },
-    { id: "r3", name: "Route Gamma", stops: 5, students: 28, status: "inactive", color: "bg-muted" },
-    { id: "r4", name: "Route Delta", stops: 7, students: 31, status: "active", color: "bg-warning" },
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [editingRoute, setEditingRoute] = useState<Route | null>(null);
+  const [routes, setRoutes] = useState<Route[]>([
+    { id: "r1", name: "Route Alpha", assignedBus: "SB-101", stops: ["City Center", "Central Park", "High School"], status: "active" },
+    { id: "r2", name: "Route Beta", assignedBus: "SB-102", stops: ["University Gate", "Library", "Dorms"], status: "active" },
+    { id: "r3", name: "Route Gamma", assignedBus: "SB-103", stops: ["Elm Street", "Maple Avenue", "Oak Road"], status: "inactive" },
+  ]);
+
+  const columns: ColumnDef<Route>[] = [
+    {
+      accessorKey: "name",
+      header: "Route Name",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+            <MapIcon className="h-5 w-5" />
+          </div>
+          <span className="font-bold">{row.original.name}</span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "assignedBus",
+      header: "Assigned Bus",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-1.5 text-sm">
+          <Bus className="h-3.5 w-3.5 text-muted-foreground" />
+          <Badge variant="secondary">{row.original.assignedBus}</Badge>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "stops",
+      header: "Stops",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-1 text-xs text-muted-foreground overflow-hidden max-w-[300px]">
+          {row.original.stops.map((stop, i) => (
+            <React.Fragment key={i}>
+              <span className="whitespace-nowrap">{stop}</span>
+              {i < row.original.stops.length - 1 && <ChevronRight className="h-3 w-3 flex-shrink-0" />}
+            </React.Fragment>
+          ))}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => (
+        <Badge variant={row.original.status === 'active' ? 'default' : 'outline'} className="capitalize text-[10px]">
+          {row.original.status}
+        </Badge>
+      ),
+    },
+    {
+      id: "actions",
+      header: () => <div className="text-right">Actions</div>,
+      cell: ({ row }) => (
+        <div className="text-right">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setEditingRoute(row.original)}>
+                <Edit className="h-4 w-4 mr-2" /> Edit Route
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <MapPin className="h-4 w-4 mr-2" /> View on Map
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(row.original.id)}>
+                <Trash2 className="h-4 w-4 mr-2" /> Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ),
+    },
   ];
+
+  const handleAdd = (data: any) => {
+    const newRoute = {
+      ...data,
+      id: `r${routes.length + 1}`,
+      stops: data.stops.map((s: any) => s.name),
+    };
+    setRoutes([newRoute, ...routes]);
+    setIsAddOpen(false);
+    toast.success("New route created successfully");
+  };
+
+  const handleEdit = (data: any) => {
+    if (!editingRoute) return;
+    setRoutes(routes.map(r => r.id === editingRoute.id ? { 
+      ...r, 
+      ...data, 
+      stops: data.stops.map((s: any) => s.name) 
+    } : r));
+    setEditingRoute(null);
+    toast.success("Route updated successfully");
+  };
+
+  const handleDelete = (id: string) => {
+    setRoutes(routes.filter(r => r.id !== id));
+    toast.success("Route deleted");
+  };
 
   return (
     <AppLayout title="Route Management">
       <div className="space-y-6">
-        <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
-          <div className="relative w-full md:w-96">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search routes by name or stop..." className="pl-10" />
-          </div>
-          <div className="flex gap-2 w-full md:w-auto">
-            <Button variant="outline" size="sm" className="flex-1 md:flex-none">
-              <Filter className="h-4 w-4 mr-2" /> Filter
-            </Button>
-            <Button size="sm" className="flex-1 md:flex-none">
-              <Plus className="h-4 w-4 mr-2" /> Create Route
-            </Button>
-          </div>
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            <MapIcon className="h-6 w-6 text-primary" />
+            Routes
+          </h2>
+          <Button onClick={() => setIsAddOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" /> Create Route
+          </Button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {routes.map((route, index) => (
-            <motion.div
-              key={route.id}
-              initial={{ opacity: 0, x: index % 2 === 0 ? -20 : 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="glass-card rounded-xl p-6 border border-border/50 hover:border-primary/30 transition-all group"
-            >
-              <div className="flex justify-between items-start mb-6">
-                <div className="flex items-center gap-4">
-                  <div className={`h-12 w-12 rounded-2xl flex items-center justify-center ${route.color}/10 ${route.color.replace('bg-', 'text-')}`}>
-                    <Route className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-xl">{route.name}</h3>
-                    <div className="flex items-center gap-3 mt-1">
-                      <span className="flex items-center text-xs text-muted-foreground">
-                        <MapPin className="h-3 w-3 mr-1" /> {route.stops} Stops
-                      </span>
-                      <span className="flex items-center text-xs text-muted-foreground">
-                        <Users className="h-3 w-3 mr-1" /> {route.students} Students
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <Badge variant={route.status === 'active' ? 'default' : 'outline'} className="capitalize">
-                  {route.status}
-                </Badge>
-              </div>
-
-              <div className="space-y-4 mb-6">
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Main Stops</h4>
-                <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                  {mockRouteStops.slice(1, 5).map((stop, i) => (
-                    <div key={stop.id} className="flex items-center shrink-0">
-                      <div className="px-3 py-1.5 rounded-lg bg-secondary/50 border border-border/50 text-xs font-medium">
-                        {stop.name}
-                      </div>
-                      {i < 3 && <div className="w-4 h-px bg-border mx-1" />}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex gap-2 pt-4 border-t border-border/50">
-                <Button variant="outline" size="sm" className="flex-1 h-10">
-                  Edit Route
-                </Button>
-                <Button variant="outline" size="sm" className="flex-1 h-10">
-                  View Map
-                </Button>
-                <Button variant="outline" size="sm" className="h-10 px-3">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        <div className="glass-card rounded-xl p-6 border border-border/50">
-          <h3 className="font-semibold mb-4">Route Optimization Suggestions</h3>
-          <div className="space-y-4">
-            <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 flex items-start gap-4">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <Clock className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm font-bold">Route Alpha Optimization</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  By bypassing City Center during peak hours (07:30-08:00), you can save approximately 12 minutes per trip.
-                </p>
-                <Button variant="link" size="sm" className="h-auto p-0 mt-2 text-primary">
-                  Apply Optimization
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass-card rounded-xl border border-border/50 p-4"
+        >
+          <DataTable 
+            columns={columns} 
+            data={routes} 
+            searchKey="name" 
+            searchPlaceholder="Search routes by name..." 
+          />
+        </motion.div>
       </div>
+
+      {/* Add Route Dialog */}
+      <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Create New Route</DialogTitle>
+          </DialogHeader>
+          <RouteForm 
+            onSubmit={handleAdd} 
+            onCancel={() => setIsAddOpen(false)} 
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Route Dialog */}
+      <Dialog open={!!editingRoute} onOpenChange={(open) => !open && setEditingRoute(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Route Details</DialogTitle>
+          </DialogHeader>
+          {editingRoute && (
+            <RouteForm 
+              initialData={editingRoute}
+              onSubmit={handleEdit} 
+              onCancel={() => setEditingRoute(null)} 
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 };

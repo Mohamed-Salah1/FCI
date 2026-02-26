@@ -1,129 +1,158 @@
+import React, { useState } from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import { mockAttendance } from "@/utils/mockData";
 import { motion } from "framer-motion";
-import { Users, Plus, Search, Filter, MoreVertical, Mail, Phone, Bus, CheckCircle, XCircle, Clock } from "lucide-react";
+import { Users, Plus, MoreVertical, CheckCircle, XCircle, Clock, User, Edit, Trash2, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { DataTable } from "@/components/ui/data-table";
+import { ColumnDef } from "@tanstack/react-table";
+import { Student } from "@/types/data";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { StudentForm } from "@/components/forms/StudentForm";
+import { toast } from "sonner";
 
 const StudentsPage = () => {
-  const students = [
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+  const [students, setStudents] = useState<Student[]>([
     { id: "s1", name: "Maya Johnson", grade: "10th Grade", bus: "SB-101", stop: "City Center", status: "active", email: "maya.j@example.com", phone: "+1 234 567 890" },
     { id: "s2", name: "Ali Hassan", grade: "11th Grade", bus: "SB-101", stop: "City Center", status: "active", email: "ali.h@example.com", phone: "+1 234 567 891" },
     { id: "s3", name: "Emma Davis", grade: "9th Grade", bus: "SB-102", stop: "University Gate", status: "inactive", email: "emma.d@example.com", phone: "+1 234 567 892" },
     { id: "s4", name: "Noah Smith", grade: "12th Grade", bus: "SB-102", stop: "University Gate", status: "active", email: "noah.s@example.com", phone: "+1 234 567 893" },
     { id: "s5", name: "Lara Khalil", grade: "10th Grade", bus: "SB-103", stop: "Elm Street", status: "active", email: "lara.k@example.com", phone: "+1 234 567 894" },
     { id: "s6", name: "Zain Abou", grade: "11th Grade", bus: "SB-104", stop: "Green Valley", status: "active", email: "zain.a@example.com", phone: "+1 234 567 895" },
+  ]);
+
+  const columns: ColumnDef<Student>[] = [
+    {
+      accessorKey: "name",
+      header: "Student",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-full gradient-primary flex items-center justify-center text-xs text-primary-foreground font-bold">
+            {row.original.name.charAt(0)}
+          </div>
+          <div className="flex flex-col">
+            <span className="font-medium">{row.original.name}</span>
+            <span className="text-[10px] text-muted-foreground">ID: {row.original.id}</span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "grade",
+      header: "Grade",
+    },
+    {
+      accessorKey: "bus",
+      header: "Bus & Stop",
+      cell: ({ row }) => (
+        <div className="flex flex-col">
+          <span className="text-sm font-medium">{row.original.bus}</span>
+          <span className="text-xs text-muted-foreground">{row.original.stop}</span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => (
+        <Badge variant={row.original.status === 'active' ? 'default' : 'outline'} className="capitalize text-[10px] h-5">
+          {row.original.status}
+        </Badge>
+      ),
+    },
+    {
+      id: "actions",
+      header: () => <div className="text-right">Actions</div>,
+      cell: ({ row }) => (
+        <div className="text-right">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setEditingStudent(row.original)}>
+                <Edit className="h-4 w-4 mr-2" /> Edit Details
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <User className="h-4 w-4 mr-2" /> View Profile
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <History className="h-4 w-4 mr-2" /> Attendance History
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(row.original.id)}>
+                <Trash2 className="h-4 w-4 mr-2" /> Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ),
+    },
   ];
+
+  const handleAdd = (data: any) => {
+    const newStudent = {
+      ...data,
+      id: `s${students.length + 1}`,
+      bus: data.route,
+      stop: data.pickupPoint,
+    };
+    setStudents([newStudent, ...students]);
+    setIsAddOpen(false);
+    toast.success("Student added successfully");
+  };
+
+  const handleEdit = (data: any) => {
+    if (!editingStudent) return;
+    setStudents(students.map(s => s.id === editingStudent.id ? { ...s, ...data, bus: data.route, stop: data.pickupPoint } : s));
+    setEditingStudent(null);
+    toast.success("Student updated successfully");
+  };
+
+  const handleDelete = (id: string) => {
+    setStudents(students.filter(s => s.id !== id));
+    toast.success("Student deleted successfully");
+  };
 
   return (
     <AppLayout title="Student Directory">
       <div className="space-y-6">
-        <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
-          <div className="relative w-full md:w-96">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search students by name, grade or bus..." className="pl-10" />
-          </div>
-          <div className="flex gap-2 w-full md:w-auto">
-            <Button variant="outline" size="sm" className="flex-1 md:flex-none">
-              <Filter className="h-4 w-4 mr-2" /> Filter
-            </Button>
-            <Button size="sm" className="flex-1 md:flex-none">
-              <Plus className="h-4 w-4 mr-2" /> Add Student
-            </Button>
-          </div>
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            <Users className="h-6 w-6 text-primary" />
+            Students
+          </h2>
+          <Button onClick={() => setIsAddOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" /> Add Student
+          </Button>
         </div>
 
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="glass-card rounded-xl border border-border/50 overflow-hidden"
+          className="glass-card rounded-xl border border-border/50 p-4"
         >
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-secondary/30 hover:bg-secondary/30">
-                <TableHead className="w-[250px]">Student</TableHead>
-                <TableHead>Grade</TableHead>
-                <TableHead>Bus & Stop</TableHead>
-                <TableHead>Contact</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {students.map((student) => (
-                <TableRow key={student.id} className="hover:bg-secondary/10 transition-colors">
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-full gradient-primary flex items-center justify-center text-xs text-primary-foreground font-bold">
-                        {student.name.charAt(0)}
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="font-medium">{student.name}</span>
-                        <span className="text-[10px] text-muted-foreground">ID: {student.id}</span>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-sm">{student.grade}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <div className="flex items-center gap-1.5 text-sm">
-                        <Bus className="h-3 w-3 text-primary" />
-                        <span>{student.bus}</span>
-                      </div>
-                      <span className="text-xs text-muted-foreground">{student.stop}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col text-xs gap-1">
-                      <div className="flex items-center gap-1.5">
-                        <Mail className="h-3 w-3 text-muted-foreground" />
-                        <span>{student.email}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Phone className="h-3 w-3 text-muted-foreground" />
-                        <span>{student.phone}</span>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={student.status === 'active' ? 'default' : 'outline'} className="capitalize text-[10px] h-5">
-                      {student.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>View Profile</DropdownMenuItem>
-                        <DropdownMenuItem>Edit Details</DropdownMenuItem>
-                        <DropdownMenuItem>Attendance History</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">Deactivate</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <DataTable 
+            columns={columns} 
+            data={students} 
+            searchKey="name" 
+            searchPlaceholder="Search students by name..." 
+          />
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -161,13 +190,11 @@ const StudentsPage = () => {
           <div className="glass-card rounded-2xl p-6 border border-border/50 flex flex-col justify-between">
             <div>
               <h3 className="font-bold text-lg mb-2">Student Statistics</h3>
-              <p className="text-sm text-muted-foreground mb-6">Overview of student enrollment and status.</p>
-
-              <div className="space-y-6">
+              <div className="space-y-6 mt-6">
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Total Students</span>
-                    <span className="font-bold">1,240</span>
+                    <span className="font-bold">{students.length}</span>
                   </div>
                   <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
                     <div className="h-full bg-primary w-full" />
@@ -176,30 +203,49 @@ const StudentsPage = () => {
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Active Riders</span>
-                    <span className="font-bold">1,185</span>
+                    <span className="font-bold">{students.filter(s => s.status === 'active').length}</span>
                   </div>
                   <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
                     <div className="h-full bg-success w-[95%]" />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Pending Registration</span>
-                    <span className="font-bold">55</span>
-                  </div>
-                  <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
-                    <div className="h-full bg-warning w-[5%]" />
-                  </div>
-                </div>
               </div>
             </div>
-
             <Button className="w-full mt-8 rounded-xl h-12">
               Generate Enrollment Report
             </Button>
           </div>
         </div>
       </div>
+
+      {/* Add Student Dialog */}
+      <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Add New Student</DialogTitle>
+          </DialogHeader>
+          <StudentForm 
+            onSubmit={handleAdd} 
+            onCancel={() => setIsAddOpen(false)} 
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Student Dialog */}
+      <Dialog open={!!editingStudent} onOpenChange={(open) => !open && setEditingStudent(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Student Details</DialogTitle>
+          </DialogHeader>
+          {editingStudent && (
+            <StudentForm 
+              initialData={editingStudent}
+              onSubmit={handleEdit} 
+              onCancel={() => setEditingStudent(null)} 
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 };
